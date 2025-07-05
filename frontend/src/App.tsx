@@ -9,6 +9,7 @@ import JobList from './pages/JobList';
 import JobCreate from './pages/JobCreate';
 import ApplicationForm from './pages/ApplicationForm';
 import ApplicationList from './pages/ApplicationList';
+import JobResults from './pages/JobResults';
 
 // Create theme
 const theme = createTheme({
@@ -35,8 +36,10 @@ function App() {
           <main>
             <Routes>
               <Route path="/" element={<JobList />} />
+              <Route path="/jobs" element={<JobList />} />
               <Route path="/jobs/create" element={<JobCreate />} />
-              <Route path="/apply" element={<ApplicationForm />} />
+              <Route path="/jobs/:jobId/apply" element={<ApplicationForm />} />
+              <Route path="/jobs/:jobId/results" element={<JobResults />} />
               <Route path="/applications" element={<ApplicationList />} />
             </Routes>
           </main>

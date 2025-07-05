@@ -1,56 +1,67 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Container,
+  Paper,
   Typography,
   TextField,
   Button,
   Box,
-  Paper,
   IconButton,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { useNavigate } from 'react-router-dom';
 
-const JobCreate = () => {
+interface Requirement {
+  type: 'education' | 'experience' | 'skills';
+  details: string;
+}
+
+const JobCreate: React.FC = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [requirement, setRequirement] = useState('');
-  const [requirements, setRequirements] = useState<string[]>([]);
-  const [question, setQuestion] = useState('');
+  const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
-  const [thresholdScore, setThresholdScore] = useState('7.0');
+  const [newRequirement, setNewRequirement] = useState({ type: 'education', details: '' });
+  const [newQuestion, setNewQuestion] = useState('');
 
-  const addRequirement = () => {
-    if (requirement.trim()) {
-      setRequirements([...requirements, requirement.trim()]);
-      setRequirement('');
+  const handleAddRequirement = () => {
+    if (newRequirement.details.trim()) {
+      setRequirements([...requirements, { ...newRequirement }]);
+      setNewRequirement({ type: 'education', details: '' });
     }
   };
 
-  const removeRequirement = (index: number) => {
+  const handleRemoveRequirement = (index: number) => {
     setRequirements(requirements.filter((_, i) => i !== index));
   };
 
-  const addQuestion = () => {
-    if (question.trim()) {
-      setQuestions([...questions, question.trim()]);
-      setQuestion('');
+  const handleAddQuestion = () => {
+    if (newQuestion.trim()) {
+      setQuestions([...questions, newQuestion]);
+      setNewQuestion('');
     }
   };
 
-  const removeQuestion = (index: number) => {
+  const handleRemoveQuestion = (index: number) => {
     setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const calculateThresholdScore = () => {
+    return questions.length * 10;
+  };
 
+  const handleSubmit = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/jobs/', {
         method: 'POST',
@@ -61,15 +72,14 @@ const JobCreate = () => {
           title,
           description,
           requirements,
-          evaluation_questions: questions,
-          threshold_score: parseFloat(thresholdScore),
+          questions,
         }),
       });
 
       if (response.ok) {
-        navigate('/');
+        navigate('/jobs');
       } else {
-        console.error('Error creating job');
+        console.error('Failed to create job');
       }
     } catch (error) {
       console.error('Error creating job:', error);
@@ -77,126 +87,134 @@ const JobCreate = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Create New Job Position
-      </Typography>
+    <Container maxWidth="md">
+      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Create New Job Position
+        </Typography>
 
-      <Paper sx={{ p: 3 }}>
-        <form onSubmit={handleSubmit}>
+        <Box sx={{ mb: 4 }}>
           <TextField
             fullWidth
             label="Job Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            required
             margin="normal"
           />
-
           <TextField
             fullWidth
             label="Job Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            required
-            margin="normal"
             multiline
             rows={4}
+            margin="normal"
           />
+        </Box>
 
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Requirements
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField
-                fullWidth
-                label="Add Requirement"
-                value={requirement}
-                onChange={(e) => setRequirement(e.target.value)}
-              />
-              <IconButton onClick={addRequirement} color="primary">
-                <AddIcon />
-              </IconButton>
-            </Box>
-            <List>
-              {requirements.map((req, index) => (
-                <ListItem key={index}>
-                  <ListItemText primary={req} />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      onClick={() => removeRequirement(index)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
-          </Box>
+        <Typography variant="h6" gutterBottom>
+          Requirements
+        </Typography>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid item xs={4}>
+            <FormControl fullWidth>
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={newRequirement.type}
+                onChange={(e) => setNewRequirement({ ...newRequirement, type: e.target.value as 'education' | 'experience' | 'skills' })}
+              >
+                <MenuItem value="education">Education</MenuItem>
+                <MenuItem value="experience">Experience</MenuItem>
+                <MenuItem value="skills">Skills</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Requirement Details"
+              value={newRequirement.details}
+              onChange={(e) => setNewRequirement({ ...newRequirement, details: e.target.value })}
+            />
+          </Grid>
+          <Grid item xs={2}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleAddRequirement}
+              startIcon={<AddIcon />}
+            >
+              Add
+            </Button>
+          </Grid>
+        </Grid>
 
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Evaluation Questions
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField
-                fullWidth
-                label="Add Question"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-              />
-              <IconButton onClick={addQuestion} color="primary">
-                <AddIcon />
-              </IconButton>
-            </Box>
-            <List>
-              {questions.map((q, index) => (
-                <ListItem key={index}>
-                  <ListItemText primary={q} />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      onClick={() => removeQuestion(index)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
-          </Box>
+        <List>
+          {requirements.map((req, index) => (
+            <ListItem key={index}>
+              <ListItemText primary={`${req.type}: ${req.details}`} />
+              <ListItemSecondaryAction>
+                <IconButton edge="end" onClick={() => handleRemoveRequirement(index)}>
+                  <DeleteIcon />
+                </IconButton>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
 
+        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+          Evaluation Questions
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField
             fullWidth
-            label="Threshold Score (0-10)"
-            type="number"
-            value={thresholdScore}
-            onChange={(e) => setThresholdScore(e.target.value)}
-            required
-            margin="normal"
-            inputProps={{ min: "0", max: "10", step: "0.1" }}
+            label="New Question"
+            value={newQuestion}
+            onChange={(e) => setNewQuestion(e.target.value)}
           />
+          <Button
+            variant="contained"
+            onClick={handleAddQuestion}
+            startIcon={<AddIcon />}
+          >
+            Add
+          </Button>
+        </Box>
 
-          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              type="submit"
-              size="large"
-            >
-              Create Job
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/')}
-              size="large"
-            >
-              Cancel
-            </Button>
-          </Box>
-        </form>
+        <List>
+          {questions.map((question, index) => (
+            <ListItem key={index}>
+              <ListItemText primary={question} />
+              <ListItemSecondaryAction>
+                <IconButton edge="end" onClick={() => handleRemoveQuestion(index)}>
+                  <DeleteIcon />
+                </IconButton>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
+
+        <Box sx={{ mt: 4, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+          <Typography variant="subtitle1">
+            Threshold Score (automatically calculated): {calculateThresholdScore()} points
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Based on {questions.length} questions × 10 points each
+          </Typography>
+        </Box>
+
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Button variant="outlined" onClick={() => navigate('/jobs')}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={!title || !description || requirements.length === 0 || questions.length === 0}
+          >
+            Create Job
+          </Button>
+        </Box>
       </Paper>
     </Container>
   );
