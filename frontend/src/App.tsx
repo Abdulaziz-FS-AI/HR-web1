@@ -30,14 +30,16 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <div>
+        <div className="App">
           <Navbar />
-          <Routes>
-            <Route path="/" element={<JobList />} />
-            <Route path="/jobs/create" element={<JobCreate />} />
-            <Route path="/apply/:jobId" element={<ApplicationForm />} />
-            <Route path="/applications" element={<ApplicationList />} />
-          </Routes>
+          <main>
+            <Routes>
+              <Route path="/" element={<JobList />} />
+              <Route path="/jobs/create" element={<JobCreate />} />
+              <Route path="/apply" element={<ApplicationForm />} />
+              <Route path="/applications" element={<ApplicationList />} />
+            </Routes>
+          </main>
         </div>
       </Router>
     </ThemeProvider>
